@@ -9,9 +9,14 @@ Things to remember while writing an OS
   - Run using qemu.
 - Make boot sector print some text by raising an interrupt for it.
 
+## Q&A
+#### Why hexadecimal is used in low-level programming
+TODO------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ## Concepts
 #### qemu
-A generic and open source machine emulator and virtualizer.
+- A generic and open source machine emulator and virtualizer.
+- Better that some other emulators because it can run architectures other than the `x86` too.
 
 #### Assembler
 A computer program which translates assembly language to an object file or machine language format.
@@ -34,7 +39,11 @@ e9 fd ff 00 00 00 00 00 00 00 00 00 00 00 00 00
 [ 29 more lines with sixteen zero-bytes each ]
 00 00 00 00 00 00 00 00 00 00 00 00 00 00 55 aa
 ```
-It is basically all zeros, ending with the 16-bit value 0xAA55 (beware of endianness, x86 is little-endian). The first three bytes perform an infinite jump
+  - It is basically all zeros, ending with the 16-bit value 0xAA55 (beware of endianness, x86 is little-endian). The first three bytes perform an infinite jump
+  - About this boot sector:
+      - The initial three bytes, in hexadecimal as 0xe9, 0xfd and 0xff, are actually machine code instructions, as defined by the CPU manufacturer, to perform an endless jump.
+      - The last 2 bytes `0x55` and `0xaa` make up the magic number, that tells the BIOS that this is a boot block and not just some data that happens to be in the boot sector.
+      - The file is padded with zeros in the middle just so that the magic number appears at the end.
 - Can either write the above 512 bytes with a binary editor, or just write a very simple assembler code
 
 ```assembly
@@ -57,3 +66,21 @@ dw 0xaa55
 - For example:
   - in a big-endian computer, the two bytes required for the hexadecimal number 4F52 would be stored as 4F52 in storage (if 4F is stored at storage address 1000, for example, 52 will be at address 1001). 
   - In a little-endian system, it would be stored as 524F (52 at address 1000, 4F at 1001).
+- In our OS we are using little-endianness because `x84` architecture uses that by default
+
+#### Interrupts
+An interrupt is a signal from a device attached to a computer or from a program within the computer that requires the operating system to stop and figure out what to do next.
+
+#### CPU registers
+- A processor register is a quickly accessible location available to a computer's central processing unit (CPU). 
+- Registers usually consist of a small amount of fast storage, although some registers have specific hardware functions, and may be read-only or write-only.
+
+#### Memory offsets
+- In computer science, an offset within an array or other data structure object is an integer indicating the distance (displacement) between the beginning of the object and a given element or point, presumably within the same object. 
+- The concept of a distance is valid only if all elements of the object are of the same size (typically given in bytes or words).
+- For example, in A as an array of characters containing "abcdef", the fourth element containing the character 'd' has an offset of three from the start of A.
+
+#### Pointers
+a pointer is a programming language object, whose value refers to (or "points to") another value stored elsewhere in the computer memory using its memory address.
+
+
