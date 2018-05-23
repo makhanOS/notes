@@ -7,6 +7,7 @@ Things to remember while writing an OS
   - Write boot sector code using a binar editor, or a simple assembler code.
   - Compile
   - Run using qemu.
+- Make boot sector print some text by raising an interrupt for it.
 
 ## Concepts
 #### qemu
