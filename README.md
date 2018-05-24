@@ -8,6 +8,10 @@ Things to remember while writing an OS
   - Compile
   - Run using qemu.
 - Make boot sector print some text by raising an interrupt for it.
+- Declaring some data in our program and using it like a variable.
+  - while doing so, we prefix it with a label
+  - can put labels anywhere in our program
+  - 
 
 ## Q&A
 #### Why hexadecimal is used in low-level programming
@@ -99,6 +103,16 @@ mov al , 0 x23 ; ax -> 0 x5623
 mov ah , 0 x16 ; ax -> 0 x1623
 ```
 
+- Four 32-bit data registers are used for arithmetic, logical, and other operations. These 32-bit registers can be used in three ways −
+  - As complete 32-bit data registers: EAX, EBX, ECX, EDX.
+  - Lower halves of the 32-bit registers can be used as four 16-bit data registers: AX, BX, CX and DX.
+  - Lower and higher halves of the above-mentioned four 16-bit registers can be used as eight 8-bit data registers: AH, AL, BH, BL, CH, CL, DH, and DL.
+- Some of these data registers have specific use in arithmetical operations.
+  - **AX is the primary accumulator**; it is used in input/output and most arithmetic instructions. For example, in multiplication operation, one operand is stored in EAX or AX or AL register according to the size of the operand.
+  - **BX is known as the base register**, as it could be used in indexed addressing.
+  - **CX is known as the count register**, as the ECX, CX registers store the loop count in iterns.ative operatio
+  - **DX is known as the data register**. It is also used in input/output operations. It is also used with AX register along with DX for multiply and divide operations involving large values.
+
 #### Memory offsets
 - In computer science, an offset within an array or other data structure object is an integer indicating the distance (displacement) between the beginning of the object and a given element or point, presumably within the same object. 
 - The concept of a distance is valid only if all elements of the object are of the same size (typically given in bytes or words).
@@ -115,4 +129,16 @@ a pointer is a programming language object, whose value refers to (or "points to
 - BIOS adds some of its own ISRs to the interrupt vector that specialise in certain aspects of the computer, for example: interrupt 0x10 causes the screen-related ISR to be invoked; and interrupt 0x13, the disk-related I/O ISR.
 - However, it would be wasteful to allocate an interrupt per BIOS routine, so BIOS multiplexes the ISRs by what we could imagine as a big switch statement, based usually on the value set in one of the CPUs general purpose registers, ax, prior to raising the interrupt.
 
-Currently at page: 12
+#### Stack
+- as in simple stack
+- can be initialized by defining a stack pointer, like: `mov sp, bp`
+- here `bp` is the address of the stack from where we want to start storing the values
+- can simply push into stack using: `push 'C'`
+- while accessing, start from behind, not from where the memory started.
+- Can print stack values one by one like this:
+
+```assembly
+pop bx
+mov al, bl
+int 0x10 ; prints C
+```
