@@ -142,3 +142,74 @@ pop bx
 mov al, bl
 int 0x10 ; prints C
 ```
+
+- The stack is implemented by two special CPU registers, bp and sp, which maintain the addresses of the stack base (i.e. the stack bottom) and the stack top respectively. 
+- Since the stack expands as we push data onto it, we usually set the stack’s base far away from important regions of memory (e.g. such as BIOS code or our code) so their is no danger of overwriting if the stack grows too large. 
+- One confusing thing about the stack is that it actually grows downwards from the base pointer, so when we issue a push, the value actually gets stored below --- and not above --- the address of bp, and sp is decremented by the value’s size.
+
+#### Strings
+- can define strings like we defined chars and ints
+- but should specify the end, like we do in C
+- sample string initialization:
+
+```assembly
+mystring:
+    db 'Hello, World', 0
+```
+- Text surrounded with quotes is converted to ASCII by the assembler, while that lone zero will be passed as byte 0x00 (null byte)
+
+#### Control structures
+- We have already used one: `jmp $` for the infinite loop.
+- Assembler jumps are defined by the previous instruction result. For example:
+
+```assembly
+cmp ax, 4      ; if ax = 4
+je ax_is_four  ; do something (by jumping to that label)
+jmp else       ; else, do another thing
+jmp endif      ; finally, resume the normal flow
+
+ax_is_four:
+    .....
+    jmp endif
+
+else:
+    .....
+    jmp endif  ; not actually necessary but printed here for completeness
+
+endif:
+```
+
+- Think in your head in high level, then convert it to assembler in this fashion.
+- There are many jmp conditions: if equal, if less than, etc. They are pretty intuitive but can always Google them
+
+#### Calling functions
+- calling a function is just a jump to a label
+- The tricky part are the parameters. There are two steps to working with parameters:
+  - The programmer knows they share a specific register or memory address
+  - Write a bit more code and make function calls generic and without side effects
+- Step 1 is easy. Let's just agree that we will use al (actually, ax) for the parameters.
+
+```assembly
+mov al, 'X'
+jmp print
+endprint:
+
+...
+
+print:
+    mov ah, 0x0e  ; tty code
+    int 0x10      ; I assume that 'al' already has the character
+    jmp endprint  ; this label is also pre-agreed
+```
+
+- You can see that this approach will quickly grow into spaghetti code. The current print function will only return to endprint. What if some other function wants to call it? We are killing code reusage.
+- The correct solution offers two improvements:
+  - We will store the return address so that it may vary
+  - We will save the current registers to allow subfunctions to modify them without any side effects
+- To store the return address, the CPU will help us. Instead of using a couple of `jmp` to call subroutines, use `call` and `ret`
+- To save the register data, there is also a special command which uses the stack: `pusha` and its brother `popa`, which pushes all registers to the stack automatically and recovers them afterwards.
+
+#### Including external files
+```assembly
+%include "file.asm"
+```
