@@ -26,6 +26,9 @@ Things to remember while writing an OS
       - [Calling functions](#calling-functions)
       - [Including external files](#including-external-files)
       - [Segmentation](#segmentation)
+      - [Cylinders](#cylinders)
+      - [Platter](#platter)
+      - [GDT](#gdt)
 
 ## Steps
 
@@ -38,7 +41,20 @@ Things to remember while writing an OS
 - Declaring some data in our program and using it like a variable.
   - while doing so, we prefix it with a label
   - can put labels anywhere in our program
-  - 
+- segmentation
+- reading data from disk
+  - OS doesn't fit inside 512 bytes, so we should be accessing the disk to run the kernel
+  - don't have to deal with turning spinning platters on/off, can just call some BIOS routines, like we did to print text
+  - To do so, we set al to `0x02` (and other registers with the required cylinder, head and sector) and raise `int 0x13`
+  - we will use for the first time the carry bit, which is an extra bit present on each register which stores when an operation has overflowed its current capacity
+
+```assembly
+mov ax, 0xFFFF
+add ax, 1 ; ax = 0x0000 and carry = 1
+```
+
+- The carry isn't accessed directly but used as a control structure by other operators, like `jc` (jump if the carry bit is set)
+- The BIOS also sets `al` to the number of sectors read, so always compare it to the expected number.
 
 ## Q&A
 
@@ -268,3 +284,22 @@ print:
 - Done by using special registers: `cs`, `ds`, `ss`, `es` for Code, data, stack, extra (user-defined)
 - to compute the real address we don't just join the two addresses, but we overlap them: `segment << 4 + address`.
   - For example, if `ds` is `0x4d`, then `[0x20]` actually refers to `0x4d0 + 0x20 = 0x4f0`
+- easy explaination:
+  - Segment is a chunk of primary memory. 
+  - Each process is privileged to use its chunk of memory allocated to it. 
+  - This allocation is agnostic to typical application programmer(The OS internally handles it with segment start address + offset). 
+- **Segmentation Fault**:
+  - If you are a C/C++ programmer, you might have seen this when you improperly use pointers. 
+  - a process is privileged to manipulate memory within the chunk allocated to it. 
+  - That implies a process owns a piece of memory and only the owner process is allowed to access until released. 
+  - What should operating system do when process X intentionally(malicious code) or unintentionally (due to improper initialization) tries to poke nose into the memory owned by process Y?.
+  - Operating system instantly kills the process X by raising an exception/interrupt. 
+
+#### Cylinders
+A cylinder is any set of all of tracks of equal diameter in a hard disk drive (HDD). It can be visualized as a single, imaginary, circle that cuts through all of the platters (and both sides of each platter) in the drive.
+
+#### Platter
+A platter is a thin, high-precision aluminum or glass disk that is coated on both sides with a high-sensitivity magnetic material and which is used by a HDD to store data. Modern HDDs contain multiple platters, all of which are mounted on a single shaft, in order to maximize the data storage surface in a given volume of space.
+
+#### GDT
+The Global Descriptor Table (GDT) is a data structure used by Intel x86-family processors starting with the 80286 in order to define the characteristics of the various memory areas used during program execution, including the base address, the size, and access privileges like executability and writability. These memory areas are called segments in Intel terminology.
