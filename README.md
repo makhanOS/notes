@@ -29,6 +29,11 @@ Things to remember while writing an OS
       - [Cylinders](#cylinders)
       - [Platter](#platter)
       - [GDT](#gdt)
+      - [32 bit](#32-bit)
+      - [Writing low level code with C](#writing-low-level-code-with-c)
+        - [Compile](#compile)
+        - [Linker](#linker)
+        - [Decompilation](#decompilation)
 
 ## Steps
 
@@ -302,4 +307,38 @@ A cylinder is any set of all of tracks of equal diameter in a hard disk drive (H
 A platter is a thin, high-precision aluminum or glass disk that is coated on both sides with a high-sensitivity magnetic material and which is used by a HDD to store data. Modern HDDs contain multiple platters, all of which are mounted on a single shaft, in order to maximize the data storage surface in a given volume of space.
 
 #### GDT
-The Global Descriptor Table (GDT) is a data structure used by Intel x86-family processors starting with the 80286 in order to define the characteristics of the various memory areas used during program execution, including the base address, the size, and access privileges like executability and writability. These memory areas are called segments in Intel terminology.
+- The Global Descriptor Table (GDT) is a data structure used by Intel x86-family processors starting with the 80286 in order to define the characteristics of the various memory areas used during program execution, including the base address, the size, and access privileges like executability and writability. These memory areas are called segments in Intel terminology.
+- segmentation in GDT:
+  - In 32-bit mode, segmentation works differently. 
+  - Now, the offset becomes an index to a segment descriptor (SD) in the GDT. 
+  - This descriptor defines the base address (32 bits), the size (20 bits) and some flags, like readonly, permissions, etc. 
+  - To add confusion, the data structures are split, so open the os-dev.pdf file and check out the figure on page 34 or the Wikipedia page for the GDT.
+- The easiest way to program the GDT is to define two segments, one for code and another for data. These can overlap which means there is no memory protection, but it's good enough to boot, we'll fix this later with a higher language (C).
+- As a curiosity, the first GDT entry must be `0x00` to make sure that the programmer didn't make any mistakes managing addresses.
+- Furthermore, the CPU can't directly load the GDT address, but it requires a meta structure called the "GDT descriptor" with the size (16b) and address (32b) of our actual GDT. It is loaded with the `lgdt` operation.
+
+#### 32 bit
+- write a new print string routine which works in 32-bit mode, where we don't have BIOS interrupts, by directly manipulating the VGA video memory instead of calling int 0x10
+- 32-bit mode allows us to use 32 bit registers and memory addressing, protected memory, virtual memory and other advantages, but we will lose BIOS interrupts and we'll need to code the GDT
+- The VGA memory starts at address 0xb8000 and it has a text mode which is useful to avoid manipulating direct pixels.
+- The formula for accessing a specific character on the 80x25 grid is: `0xb8000 + 2 * (row * 80 + col)`
+- That is, every character uses 2 bytes (one for the ASCII, another for color and such), and we see that the structure of the memory concatenates rows.
+
+#### Writing low level code with C
+
+##### Compile
+
+- To compile system-independent code, we need the flag `-ffreestanding`
+- compile: `i386-elf-gcc -ffreestanding -c function.c -o function.o`
+- examine machine code generated: `i386-elf-objdump -d function.o`
+
+##### Linker
+
+- to produce a binary file, we will use the linker
+- An important part of this step is to learn how high level languages call function labels. Which is the offset where our function will be placed in memory? We don't actually know. For this example, we'll place the offset at 0x0 and use the binary format which generates machine code without any labels and/or metadata
+- examine both "binary" files, function.o and function.bin using `xxd`. You will see that the .bin file is machine code, while the .o file has a lot of debugging information, labels, etc.
+
+##### Decompilation
+we can examine machine code like this:
+`ndisasm -b 32 function.bin`
+
